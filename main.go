@@ -26,5 +26,6 @@ func main() {
 	beego.Router("/topic", &controllers.TopicController{})
 	beego.AutoRouter(&controllers.TopicController{})       //自动路由
 	beego.Router("/login", &controllers.LoginController{}) //登陆页的路由
+	// 启动 beego
 	beego.Run()
 }

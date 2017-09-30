@@ -12,20 +12,24 @@ import (
 )
 
 const (
-	_DB_NAME        = "data/beeblog.db"
+	// 设置数据库路径
+	_DB_NAME = "data/beeblog.db"
+	// 设置数据库名称
 	_SQLITE3_DRIVER = "sqlite3"
 )
 
+// 分类
 type Category struct {
 	Id              int64
 	Title           string
 	Created         time.Time `orm:"index"`
-	Views           int64     `orm"index"`
+	Views           int64     `orm:"index"`
 	TopicTime       time.Time `orm:"index"`
 	TopicCount      int64
 	TopicLastUserId int64
 }
 
+// 文章
 type Topic struct {
 	Id              int64
 	Uid             int64
@@ -41,56 +45,8 @@ type Topic struct {
 	ReplyLastUserId int64
 }
 
-func AddTopic(title, content string) error {
-	o := orm.NewOrm()
-
-	topic := &Topic{
-		Title:   title,
-		Content: content,
-		Created: time.Now(),
-		Updated: time.Now(),
-	}
-
-	_, err := o.Insert(topic)
-
-	return err
-}
-
-func GetTopic(tid string) (*Topic, error) {
-	tidNum, err := strconv.ParseInt(tid, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	o := orm.NewOrm()
-	topic := new(Topic)
-	qs := o.QueryTable("topic")
-	err = qs.Filter("id", tidNum).One(topic)
-	if err != nil {
-		return nil, err
-	}
-
-	topic.Views++
-	_, err = o.Update(topic)
-	return topic, err
-}
-
-func GetAllTopics(isDesc bool) ([]*Topic, error) {
-	o := orm.NewOrm()
-	topics := make([]*Topic, 0)
-	qs := o.QueryTable("topic")
-
-	var err error
-	if isDesc {
-		_, err = qs.OrderBy("-created").All(&topics)
-	} else {
-		_, err = qs.All(&topics)
-	}
-	return topics, err
-}
-
 func RegisterDB() {
-	//检查数据库文件
+	// 检查数据库文件
 	if !com.IsExist(_DB_NAME) {
 		os.MkdirAll(path.Dir(_DB_NAME), os.ModePerm)
 		os.Create(_DB_NAME) //创建数据库文件
@@ -109,14 +65,14 @@ func AddCategory(name string) error {
 
 	cate := &Category{Title: name}
 
-	//查询数据
+	// 查询数据
 	qs := o.QueryTable("category")
 	err := qs.Filter("title", name).One(cate)
 	if err == nil {
 		return err
 	}
 
-	//插入数据
+	// 插入数据
 	_, err = o.Insert(cate)
 	if err != nil {
 		return err
@@ -132,6 +88,7 @@ func DeleteCategory(id string) error {
 	}
 
 	o := orm.NewOrm()
+
 	cate := &Category{Id: cid}
 	_, err = o.Delete(cate)
 	return err
@@ -139,9 +96,89 @@ func DeleteCategory(id string) error {
 
 func GetAllCategories() ([]*Category, error) {
 	o := orm.NewOrm()
+
 	cates := make([]*Category, 0)
 
 	qs := o.QueryTable("category")
 	_, err := qs.All(&cates)
 	return cates, err
+}
+
+func AddTopic(title, content string) error {
+	o := orm.NewOrm()
+
+	topic := &Topic{
+		Title:   title,
+		Content: content,
+		Created: time.Now(),
+		Updated: time.Now(),
+	}
+	_, err := o.Insert(topic)
+	return err
+}
+
+func GetTopic(tid string) (*Topic, error) {
+	tidNum, err := strconv.ParseInt(tid, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	o := orm.NewOrm()
+
+	topic := new(Topic)
+
+	qs := o.QueryTable("topic")
+	err = qs.Filter("id", tidNum).One(topic)
+	if err != nil {
+		return nil, err
+	}
+
+	topic.Views++
+	_, err = o.Update(topic)
+	return topic, err
+}
+
+func ModifyTopic(tid, title, content string) error {
+	tidNum, err := strconv.ParseInt(tid, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	o := orm.NewOrm()
+	topic := &Topic{Id: tidNum}
+	if o.Read(topic) == nil {
+		topic.Title = title
+		topic.Content = content
+		topic.Updated = time.Now()
+		o.Update(topic)
+	}
+	return nil
+}
+
+func DeleteTopic(tid string) error {
+	tidNum, err := strconv.ParseInt(tid, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	o := orm.NewOrm()
+
+	topic := &Topic{Id: tidNum}
+	_, err = o.Delete(topic)
+	return err
+}
+
+func GetAllTopics(isDesc bool) (topics []*Topic, err error) {
+	o := orm.NewOrm()
+
+	topics = make([]*Topic, 0)
+
+	qs := o.QueryTable("topic")
+
+	if isDesc {
+		_, err = qs.OrderBy("-created").All(&topics)
+	} else {
+		_, err = qs.All(&topics)
+	}
+	return topics, err
 }

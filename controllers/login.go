@@ -10,6 +10,7 @@ type LoginController struct {
 }
 
 func (this *LoginController) Get() {
+	// 判断是否为退出操作
 	isExit := this.Input().Get("exit") == "true"
 
 	if isExit {

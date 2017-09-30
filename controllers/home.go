@@ -18,8 +18,7 @@ func (this *HomeController) Get() {
 
 	topics, err := models.GetAllTopics(true)
 	if err != nil {
-		beego.Error(err.Error())
-	} else {
-		this.Data["Topics"] = topics
+		beego.Error(err)
 	}
+	this.Data["Topics"] = topics
 }
